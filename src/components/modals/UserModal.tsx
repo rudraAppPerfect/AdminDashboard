@@ -5,21 +5,20 @@ import { UserContext, UserContextType } from "@/contextApi/UserState";
 import { useForm, Controller } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-
+import toast from "react-hot-toast";
 
 const schema = z.object({
-  name: z.string().min(1,"Name is required"),
-  email: z.string().email("Invalid email").min(1,"Email is required"),
-  role: z.string().min(1,"Role is required"),
-  status: z.string().min(1,"Status is required"),
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email").min(1, "Email is required"),
+  role: z.string().min(1, "Role is required"),
+  status: z.string().min(1, "Status is required"),
 });
 
 type FormData = z.infer<typeof schema>;
 
-
-const UserModal = () => {                                                                                                                                                                                                                                                                              
+const UserModal = () => {
   const { isOpen, onClose, type } = useModal();
-  const isModalOpen = isOpen && (type==='createUser' || type==='editUser');
+  const isModalOpen = isOpen && (type === "createUser" || type === "editUser");
 
   const context = useContext(UserContext);
   const { usersArray, setUsersArray, id } = context as UserContextType;
@@ -56,6 +55,7 @@ const UserModal = () => {
     ]);
     reset();
     onClose();
+    toast.success("User created successfully");
   };
 
   const handleUpdate = (data: FormData) => {
@@ -65,6 +65,7 @@ const UserModal = () => {
     setUsersArray(updatedUsers);
     reset();
     onClose();
+    toast.success("User updated successfully");
   };
 
   const onSubmit = (data: FormData) => {

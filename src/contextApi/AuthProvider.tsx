@@ -1,8 +1,9 @@
 "use client";
 
 import { createContext, useState, useEffect, ReactNode } from "react";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 type User = {
   email: string;
@@ -10,7 +11,7 @@ type User = {
 };
 
 export interface AuthContextType {
-  user: User | null;
+  user: RegisteredUsers | null;
   register: (email: string, password: string) => void;
   login: (email: string, password: string) => void;
   logout: () => void;
@@ -19,25 +20,30 @@ export interface AuthContextType {
 type RegisteredUsers = {
   email: string;
   password: string;
-  token: string;
+  role: string;
+  token?: string;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [registeredUsers, setRegisteredUsers] = useState(
-    [] as RegisteredUsers[]
-  );
-  const {push} = useRouter();
+  const [user, setUser] = useState<RegisteredUsers | null>(null);
+
+  const [registeredUsers, setRegisteredUsers] = useState([
+    { email: "rahul@gmail.com", password: "12345", role: "Admin" },
+  ] as RegisteredUsers[]);
+
+  const { push } = useRouter();
 
   useEffect(() => {
     const jwtToken = localStorage.getItem("token");
-    console.log(jwtToken)
     if (jwtToken) {
       try {
-        const decodedUser = jwt.verify(jwtToken, `${process.env.NEXT_JWT_SECRET}`);
-        setUser(decodedUser as User);
+        const decodedUser = jwt.verify(
+          jwtToken,
+          `${process.env.NEXT_JWT_SECRET}`
+        );
+        setUser(decodedUser as RegisteredUsers);
         push("/users");
       } catch (error) {
         console.error("Invalid token");
@@ -47,10 +53,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const register = (email: string, password: string) => {
-    const newUser = { email, password };
+    const newUser = { email, password, role: "User" };
     const token = jwt.sign(newUser, `${process.env.NEXT_JWT_SECRET}`);
     localStorage.setItem("token", token);
-    const newRegisteredUser = { newUser, token };
     setRegisteredUsers([...registeredUsers, { ...newUser, token }]);
     setUser(newUser);
     push("/users");
@@ -67,7 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     if (!found) {
-      console.error("User not found");
+      toast.error("User not found");
     }
   };
 

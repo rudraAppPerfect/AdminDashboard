@@ -8,9 +8,8 @@ interface ModalProps {
 }
 
 export default function Modal({ open, onClose, children,typeOfModal }: ModalProps) {
-
+  
   return (
-    // backdrop
     <div
       onClick={onClose}
       className={`
@@ -18,11 +17,10 @@ export default function Modal({ open, onClose, children,typeOfModal }: ModalProp
         ${open ? "visible bg-black/20" : "invisible"}
       `}
     >
-      {/* modal */}
       <div
         onClick={(e) => e.stopPropagation()}
         className={`
-          bg-white z-20 absolute top-[20%] rounded-xl shadow ${typeOfModal == 'Delete' ? 'w-[20%]' :'w-[50%]'} transition-all w-[50%] p-6
+          bg-white z-20 absolute top-[20%] rounded-xl shadow ${typeOfModal === 'Delete' ? 'w-[20%]' :'w-[50%]'} transition-all p-6
           ${open ? "scale-100 opacity-100" : "scale-125 opacity-0"}
         `}
       >

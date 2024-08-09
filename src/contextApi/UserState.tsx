@@ -2,6 +2,7 @@
 
 import { User } from "@/app/users/page";
 import { useState, createContext, ReactNode } from "react";
+import { faker } from '@faker-js/faker';
 
 export interface UserContextType {
   usersArray: User[];
@@ -23,52 +24,33 @@ const UserContext = createContext<UserContextType | null>(null);
 const STATUS = "Active";
 
 const UserState = ({ children }: { children: ReactNode }) => {
-  const users = [
-    {
-      id: 1,
-      name: "John Doe",
-      email: "johndoe@gmail.com",
-      role: "Software Engineer",
-      status: STATUS,
-    },
-    {
-      id: 2,
-      name: "Rohan",
-      email: "rohan2@gmail.com",
-      role: "Frontend Developer",
-      status: STATUS,
-    },
-    {
-      id: 3,
-      name: "John Doe",
-      email: "johndoe@gmail.com",
-      role: "Software Engineer",
-      status: STATUS,
-    },
-    {
-      id: 4,
-      name: "Rohan",
-      email: "rohan2@gmail.com",
-      role: "Frontend Developer",
-      status: STATUS,
-    },
-    {
-      id: 5,
-      name: "John",
-      email: "johndoe@gmail.com",
-      role: "Software Engineer",
-      status: STATUS,
-    },
-    {
-      id: 6,
-      name: "Rohit",
-      email: "rohan2@gmail.com",
-      role: "Frontend Developer",
-      status: STATUS,
-    },
-  ];
 
-  const [usersArray, setUsersArray] = useState(users);
+  const generateFakeUsers = (count: number): User[] => {
+    const users: User[] = [];
+  
+    for (let i = 1; i <= count; i++) {
+      const user: User = {
+        id: i,
+        name: faker.person.fullName(),
+        email: faker.internet.email(),
+        role: 'User',
+        status: faker.helpers.arrayElement(['Active', 'Inactive']),
+      };
+      users.push(user);
+    }
+    users.push({
+      id:1000,
+      name:'Rahul',
+      email:'rahul@gmail.com',
+      role:'Admin',
+      status:'Active'
+    })
+    return users;
+  };
+  
+  const fakeUsers = generateFakeUsers(999);
+
+  const [usersArray, setUsersArray] = useState(fakeUsers);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("");

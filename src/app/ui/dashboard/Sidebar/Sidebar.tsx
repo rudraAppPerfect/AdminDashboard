@@ -12,7 +12,7 @@ const Sidebar = () => {
     return null;
   }
 
-  const { logout } = authContext;
+  const { logout, user } = authContext;
 
   return (
     <div className="text-white hidden lg:block w-[25%] min-h-screen bg-slate-800 p-8">
@@ -25,8 +25,8 @@ const Sidebar = () => {
           />
 
           <div className="ml-4">
-            <h1 className="text-lg">Rudra</h1>
-            <h1 className="text-sm">Administrator</h1>
+            <h1 className="text-lg">{user?.email.split("@")[0]}</h1>
+            <h1 className="text-sm">{user?.role}</h1>
           </div>
         </div>
 
