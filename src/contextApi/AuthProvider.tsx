@@ -19,7 +19,7 @@ export interface AuthContextType {
 type RegisteredUsers = {
   email: string;
   password: string;
-  token: JwtPayload | string;
+  token: string;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,17 +29,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [registeredUsers, setRegisteredUsers] = useState(
     [] as RegisteredUsers[]
   );
-  const router = useRouter();
-
-  console.log(registeredUsers);
+  const {push} = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
+    const jwtToken = localStorage.getItem("token");
+    console.log(jwtToken)
+    if (jwtToken) {
       try {
-        const decodedUser = jwt.verify(token, `${process.env.NEXT_JWT_SECRET}`);
+        const decodedUser = jwt.verify(jwtToken, `${process.env.NEXT_JWT_SECRET}`);
         setUser(decodedUser as User);
-        router.push("/users");
+        push("/users");
       } catch (error) {
         console.error("Invalid token");
       }
@@ -54,34 +53,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const newRegisteredUser = { newUser, token };
     setRegisteredUsers([...registeredUsers, { ...newUser, token }]);
     setUser(newUser);
-    router.push("/users");
+    push("/users");
   };
 
   const login = (email: string, password: string) => {
-    // const token = localStorage.getItem("token");
-    // if (token) {
-    //   try {
-    //     const decodedUser = jwt.verify(
-    //       token,
-    //       `${process.env.NEXT_JWT_SECRET}`
-    //     ) as User;
-    //     if (decodedUser.email === email && decodedUser.password === password) {
-    //       setUser(decodedUser as User);
-    //       router.push("/users");
-    //     } else {
-    //       console.error("Invalid credentials");
-    //     }
-    //   } catch (error) {
-    //     console.error("Invalid token");
-    //   }
-    // } else {
-    //   console.error("User doesn't exist");
-    // }
     let found = false;
     for (let user of registeredUsers) {
       if (user.email === email && user.password == password) {
         setUser(user);
-        router.push("/users");
+        push("/users");
         found = true;
         break;
       }
@@ -94,7 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     localStorage.removeItem("token");
     setUser(null);
-    router.push("/");
+    push("/");
   };
 
   return (
