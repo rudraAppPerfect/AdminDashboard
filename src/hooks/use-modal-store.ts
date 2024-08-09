@@ -1,10 +1,9 @@
 import { create } from "zustand";
 
-export type ModalType = "createUser" | "editUser";
+export type ModalType = "createUser" | "editUser" | "deleteUser";
 
 interface ModalData {
-  name?: string;
-  address?: string;
+  id? : number
 }
 
 interface ModalStore {

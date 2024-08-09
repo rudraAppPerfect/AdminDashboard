@@ -3,10 +3,11 @@ import { X } from "lucide-react";
 interface ModalProps {
   open: boolean;
   onClose: () => void;
+  typeOfModal:string
   children: React.ReactNode;
 }
 
-export default function Modal({ open, onClose, children }: ModalProps) {
+export default function Modal({ open, onClose, children,typeOfModal }: ModalProps) {
 
   return (
     // backdrop
@@ -21,7 +22,7 @@ export default function Modal({ open, onClose, children }: ModalProps) {
       <div
         onClick={(e) => e.stopPropagation()}
         className={`
-          bg-white z-20 absolute top-[20%] rounded-xl shadow transition-all w-[50%] p-6
+          bg-white z-20 absolute top-[20%] rounded-xl shadow ${typeOfModal == 'Delete' ? 'w-[20%]' :'w-[50%]'} transition-all w-[50%] p-6
           ${open ? "scale-100 opacity-100" : "scale-125 opacity-0"}
         `}
       >
