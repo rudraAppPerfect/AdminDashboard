@@ -1,18 +1,19 @@
 import Home from "@/app/page";
+import UsersPage from "@/app/users/page";
 import AuthContext, { AuthContextType } from "@/contextApi/AuthProvider";
+import UserState from "@/contextApi/UserState";
 import "@testing-library/jest-dom";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 
 const mockRegister = jest.fn();
 const mockLogin = jest.fn();
+const mockLogOut = jest.fn();
 
 const mockAuthContext: AuthContextType = {
   register: mockRegister,
   login: mockLogin,
   user: null,
-  logout: function (): void {
-    throw new Error("Function not implemented.");
-  },
+  logout: mockLogOut,
 };
 
 const renderWithContext = (ui: React.ReactElement) => {
@@ -75,5 +76,26 @@ describe("Authorization", () => {
     });
 
     expect(mockLogin).toHaveBeenCalledWith("rohit@gmail.com", "123456");
+  });
+
+  it("log outs the Logged In User correctly", async () => {
+    render(
+      <AuthContext.Provider value={mockAuthContext}>
+        <UserState>
+          <UsersPage />
+        </UserState>
+      </AuthContext.Provider>
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /log out/i,
+      })
+    );
+
+    expect(mockLogOut).toHaveBeenCalled;
+
+    const storedUser = localStorage.getItem("token");
+    expect(storedUser).not.toBeDefined;
   });
 });
