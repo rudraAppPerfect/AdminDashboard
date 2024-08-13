@@ -3,19 +3,22 @@ import Modal from "../ui/modal/modal";
 import { useModal } from "@/hooks/use-modal-store";
 import { UserContext, UserContextType } from "@/contextApi/UserState";
 import { useForm, Controller } from "react-hook-form";
-import * as yup from "yup";
-import { yupResolver } from "@hookform/resolvers/yup";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import toast from "react-hot-toast";
 
-const schema = yup.object().shape({
-  name: yup.string().required("Name is required"),
-  email: yup.string().email("Invalid email").required("Email is required"),
-  role: yup.string().required("Role is required"),
-  status: yup.string().required("Status is required"),
+const schema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email").min(1, "Email is required"),
+  role: z.string().min(1, "Role is required"),
+  status: z.string().min(1, "Status is required"),
 });
 
-const UserModal = () => {                                                                                                                                                                                                                                                                              
+type FormData = z.infer<typeof schema>;
+
+const UserModal = () => {
   const { isOpen, onClose, type } = useModal();
-  const isModalOpen = isOpen;
+  const isModalOpen = isOpen && (type === "createUser" || type === "editUser");
 
   const context = useContext(UserContext);
   const { usersArray, setUsersArray, id } = context as UserContextType;
@@ -26,8 +29,8 @@ const UserModal = () => {
     setValue,
     reset,
     formState: { errors },
-  } = useForm({
-    resolver: yupResolver(schema),
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
   });
 
   useEffect(() => {
@@ -42,12 +45,7 @@ const UserModal = () => {
     }
   }, [type, id, usersArray, setValue]);
 
-  const handleCreate = (data: {
-    name: string;
-    email: string;
-    role: string;
-    status: string;
-  }) => {
+  const handleCreate = (data: FormData) => {
     setUsersArray([
       ...usersArray,
       {
@@ -57,28 +55,20 @@ const UserModal = () => {
     ]);
     reset();
     onClose();
+    toast.success("User created successfully");
   };
 
-  const handleUpdate = (data: {
-    name: string;
-    email: string;
-    role: string;
-    status: string;
-  }) => {
+  const handleUpdate = (data: FormData) => {
     const updatedUsers = usersArray.map((user) =>
       user.id === id ? { ...user, ...data } : user
     );
     setUsersArray(updatedUsers);
     reset();
     onClose();
+    toast.success("User updated successfully");
   };
 
-  const onSubmit = (data: {
-    name: string;
-    email: string;
-    role: string;
-    status: string;
-  }) => {
+  const onSubmit = (data: FormData) => {
     if (type === "createUser") {
       handleCreate(data);
     } else {
@@ -87,7 +77,7 @@ const UserModal = () => {
   };
 
   return (
-    <Modal open={isModalOpen} onClose={onClose}>
+    <Modal open={isModalOpen} onClose={onClose} typeOfModal="UserModal">
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="flex flex-col gap-3 pb-4"

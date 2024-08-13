@@ -6,6 +6,8 @@ import UserImage from "../../../public/noavatar.png";
 import { useContext, useEffect, useState } from "react";
 import { UserContext, UserContextType } from "@/contextApi/UserState";
 import PaginationControls from "@/components/ui/Pagination/PaginationControls";
+import AuthContext, { AuthContextType } from "@/contextApi/AuthProvider";
+import { Square, SquareCheck } from "lucide-react";
 
 export interface User {
   id: number;
@@ -18,26 +20,20 @@ export interface User {
 const UsersPage = () => {
   const { onOpen } = useModal();
   const [searchText, setSearchText] = useState("");
+  const [toDelete, setToDelete] = useState([] as User[]);
 
   const context = useContext(UserContext);
-  const {
-    usersArray,
-    setUsersArray,
-    name,
-    setName,
-    email,
-    setEmail,
-    role,
-    setRole,
-    status,
-    setStatus,
-    id,
-    setId,
-  } = context as UserContextType;
+  const { usersArray, setName, setEmail, setRole, setStatus, setId } =
+    context as UserContextType;
+
+  const authContext = useContext(AuthContext);
+
+  const { logout, user } = authContext as AuthContextType;
 
   const [tempArray, setTempArray] = useState(usersArray);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 2;
+  const itemsPerPage = 10;
+  const isAdmin = user?.role === "Admin";
 
   useEffect(() => {
     let finalResults = usersArray;
@@ -47,9 +43,13 @@ const UsersPage = () => {
         user.name.toLowerCase().includes(searchText.toLowerCase())
       );
     }
-
+    setCurrentPage(1);
     setTempArray(finalResults);
-  }, [searchText,usersArray]);
+  }, [searchText, usersArray]);
+
+  useEffect(() => {
+    setToDelete([]);
+  }, [usersArray]);
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -60,80 +60,131 @@ const UsersPage = () => {
   };
 
   return (
-    <div className="p-12 w-full">
-      <div className="bg-slate-700 p-4 rounded-lg w-full flex items-center justify-between">
-        <h1 className="text-white">Dashboard</h1>
+    <div className="w-full flex flex-col lg:py-12 py-4 items-center">
+      {isAdmin &&
+      <div>
+        <h1 className="text-white font-medium">
+          Total Selected Users : {toDelete.length}
+        </h1>
+      </div>}
+
+      <div className="bg-slate-700 p-4 rounded-lg w-[98%] sm:w-[90%] flex items-center justify-between mt-2">
+        <h1 className="text-white hidden lg:block">
+          Total Users: {usersArray.length}
+        </h1>
         <button
-          className="bg-green-400 text-white p-1 px-3 rounded-md outline-none"
-          onClick={() => onOpen("createUser")}
+          className="bg-red-300 lg:hidden rounded-md py-1 w-[20%] font-medium"
+          onClick={() => logout()}
         >
-          Create +
+          Log Out
         </button>
+        {isAdmin && (
+          <button
+            className="bg-green-400 text-white p-1 px-3 rounded-md outline-none"
+            onClick={() => onOpen("createUser")}
+          >
+            Create +
+          </button>
+        )}
       </div>
 
-      <div className="bg-slate-700 text-white p-4 rounded-lg mt-8">
-        <input
-          type="text"
-          onChange={(e) => setSearchText(e.target.value)}
-          value={searchText}
-          placeholder="Search User"
-          className="text-black p-1 px-4 rounded-md outline-none"
-        />
-        <table>
+      <div className="bg-slate-700 text-white p-4 rounded-lg mt-8 w-[98%] sm:w-[90%] ">
+        <div className="flex items-center justify-between">
+          <input
+            type="text"
+            onChange={(e) => setSearchText(e.target.value)}
+            value={searchText}
+            placeholder="Search User"
+            className="text-black p-1 px-4 rounded-md outline-none"
+          />
+          {toDelete.length > 0 && (
+            <button
+              onClick={() => onOpen("deleteUsers", { usersData: toDelete })}
+              className="bg-red-400 text-white p-1 px-2 rounded-md"
+            >
+              Delete All
+            </button>
+          )}
+        </div>
+        <table className="w-full mt-4 text-xs sm:text-base">
           <thead>
             <tr>
-              <td className="p-4">Name</td>
-              <td className="p-4 px-16">Email</td>
-              <td className="p-4 px-16">Role</td>
-              <td className="p-4 px-16">Status</td>
-              <td className="p-4 px-16">Action</td>
+              {isAdmin && <td className="w-[4%]"></td>}
+              <td className="w-[16%] md:pl-4">Name</td>
+              <td className="w-[20%] text-center">Email</td>
+              <td className="w-[20%] text-center">Role</td>
+              <td className="w-[20%] text-center">Status</td>
+              {isAdmin && <td className="w-[20%] text-center">Action</td>}
             </tr>
           </thead>
           <tbody>
             {paginatedUsers.map((user: User) => {
               return (
                 <tr key={user.id}>
-                  <td className="p-4">
-                    <div className="flex items-center">
+                  {isAdmin && (
+                    <td className="w-[4%] py-4">
+                      <div className="flex items-center justify-center">
+                        {toDelete.includes(user) ? (
+                          <button
+                            onClick={() => {
+                              const updated = toDelete.filter(
+                                (item: User) => item != user
+                              );
+                              setToDelete(updated);
+                            }}
+                          >
+                            <SquareCheck />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setToDelete([...toDelete, user])}
+                          >
+                            <Square />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  )}
+                  <td className="w-[16%] py-4">
+                    <div className="flex items-center md:ml-4">
                       <Image
                         src={UserImage}
                         alt="user"
-                        className="w-[5%] h-[5%] rounded-full"
+                        className="w-[10%] h-[10%] rounded-full"
                       />
-                      <h1 className="ml-3">{user.name}</h1>
+                      <h1 className="lg:ml-3 ml-1">{user.name}</h1>
                     </div>
                   </td>
-                  <td className="py-4 pl-12">{user.email}</td>
-                  <td className="py-4 pl-12">{user.role}</td>
-                  <td className="py-4 pl-12">{user.status}</td>
-                  <td className="py-4 pl-12">
-                    <div className="flex items-center">
-                      <button
-                        onClick={() => {
-                          setId(user.id);
-                          setName(user.name);
-                          setEmail(user.email);
-                          setRole(user.role);
-                          setStatus(user.status);
-                          onOpen("editUser");
-                        }}
-                        className="py-1 px-3 bg-yellow-400 text-white rounded-md"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => {
-                          const updatedArray = usersArray.filter(
-                            (item: User) => user.id != item.id
-                          );
-                          setUsersArray(updatedArray);
-                        }}
-                        className="py-1 px-3 bg-red-400 text-white rounded-md ml-3"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
+                  <td className="w-[20%] text-center py-4">{user.email}</td>
+                  <td className="w-[20%] text-center py-4">{user.role}</td>
+                  <td className="w-[20%] text-center py-4">{user.status}</td>
+                  {isAdmin && (
+                    <td className="w-[20%] text-center py-4">
+                      <div className="md:flex items-center justify-center">
+                        <button
+                          onClick={() => {
+                            setId(user.id);
+                            setName(user.name);
+                            setEmail(user.email);
+                            setRole(user.role);
+                            setStatus(user.status);
+                            onOpen("editUser");
+                          }}
+                          className="py-1 px-3 bg-yellow-400 text-white rounded-md"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => {
+                            onOpen("deleteUser", { id: user.id });
+                          }}
+                          className="py-1 px-3 mt-2 md:mt-0 bg-red-400 text-white rounded-md ml-3"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               );
             })}
