@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Sidebar from "./ui/dashboard/Sidebar/Sidebar";
 import ModalProvider from "@/components/providers/modal-provider";
 import UserState from "@/contextApi/UserState";
 import { AuthProvider } from "@/contextApi/AuthProvider";
+import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,6 +27,7 @@ export default function RootLayout({
             {children}
           </UserState>
         </AuthProvider>
+        <Toaster position="top-center" reverseOrder={false} />
       </body>
     </html>
   );
