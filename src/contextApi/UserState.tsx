@@ -1,8 +1,10 @@
 "use client";
 
 import { User } from "@/app/users/page";
-import { useState, createContext, ReactNode } from "react";
-import { faker } from '@faker-js/faker';
+import { useState, createContext, ReactNode, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 export interface UserContextType {
   usersArray: User[];
@@ -17,6 +19,14 @@ export interface UserContextType {
   setStatus: (newString: string) => void;
   id: number;
   setId: (newId: number) => void;
+  user: User | undefined;
+  setUser: (newUser: User) => void;
+  logOut: () => void;
+  totalUsers: number;
+  setTotalUsers: (value: number | ((prev: number) => number)) => void;
+  getUsers: (page: number) => void;
+  currentPage: number;
+  setCurrentPage: (value: number) => void;
 }
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -24,38 +34,43 @@ const UserContext = createContext<UserContextType | null>(null);
 const STATUS = "Active";
 
 const UserState = ({ children }: { children: ReactNode }) => {
-
-  const generateFakeUsers = (count: number): User[] => {
-    const users: User[] = [];
-  
-    for (let i = 1; i <= count; i++) {
-      const user: User = {
-        id: i,
-        name: faker.person.fullName(),
-        email: faker.internet.email(),
-        role: 'User',
-        status: faker.helpers.arrayElement(['Active', 'Inactive']),
-      };
-      users.push(user);
-    }
-    users.push({
-      id:1000,
-      name:'Rahul',
-      email:'rahul@gmail.com',
-      role:'Admin',
-      status:'Active'
-    })
-    return users;
-  };
-  
-  const fakeUsers = generateFakeUsers(999);
-
-  const [usersArray, setUsersArray] = useState(fakeUsers);
+  const { push } = useRouter();
+  const [usersArray, setUsersArray] = useState([] as User[]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("");
   const [status, setStatus] = useState(STATUS);
   const [id, setId] = useState(0);
+  const [user, setUser] = useState<User | undefined>(undefined);
+  const [totalUsers, setTotalUsers] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const logOut = () => {
+    localStorage.removeItem("token");
+    setUser(undefined);
+    push("/");
+  };
+
+  const getUsers = async (page: number) => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_HOST}/api/users?page=${page}`,
+        {
+          headers: {
+            "auth-token": localStorage.getItem("token"),
+          },
+        }
+      );
+      setUsersArray(response.data.data);
+      setTotalUsers(response.data.meta.totalUsers);
+    } catch (error) {
+      let message;
+      if (axios.isAxiosError(error) && error.response) {
+        message = error.response.data.message;
+      } else message = String(error);
+      toast.error(message);
+    }
+  };
 
   return (
     <UserContext.Provider
@@ -72,6 +87,14 @@ const UserState = ({ children }: { children: ReactNode }) => {
         setStatus,
         id,
         setId,
+        user,
+        setUser,
+        logOut,
+        totalUsers,
+        setTotalUsers,
+        getUsers,
+        currentPage,
+        setCurrentPage,
       }}
     >
       {children}

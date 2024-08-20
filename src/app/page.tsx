@@ -1,10 +1,15 @@
 "use client";
 
-import AuthContext, { AuthContextType } from "@/contextApi/AuthProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useContext, useState } from "react";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import { useContext, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import * as z from "zod";
+import jwt from "jsonwebtoken";
+import { UserContext, UserContextType } from "@/contextApi/UserState";
+import { User } from "./users/page";
 
 const schema = z.object({
   email: z.string().email("Invalid email").min(1, "Email is required"),
@@ -15,9 +20,28 @@ type FormData = z.infer<typeof schema>;
 
 export default function Home() {
   const [type, setType] = useState("Login");
-  const authContext = useContext(AuthContext);
 
-  const { register, login } = authContext as AuthContextType;
+  const { push } = useRouter();
+
+  const context = useContext(UserContext);
+  const { setUser } = context as UserContextType;
+
+  useEffect(() => {
+    const jwtToken = localStorage.getItem("token");
+    if (jwtToken) {
+      try {
+        const decodedUser = jwt.verify(
+          jwtToken,
+          process.env.NEXT_PUBLIC_JWT_SECRET as string
+        );
+        setUser(decodedUser as User);
+        push("/users");
+      } catch (error) {
+        console.error("Invalid token");
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const {
     handleSubmit,
@@ -28,12 +52,57 @@ export default function Home() {
     resolver: zodResolver(schema),
   });
 
-  const handleRegister = (data: FormData) => {
-    register(data.email, data.password);
+  const handleRegister = async (data: FormData) => {
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_HOST}/api/register`,
+        {
+          email: data.email,
+          password: data.password,
+        }
+      );
+      console.log(response.data);
+      localStorage.setItem("token", response.data.token);
+      const decodedUser = jwt.verify(
+        response.data.token as string,
+        process.env.NEXT_PUBLIC_JWT_SECRET as string
+      );
+      console.log("dUser: ", decodedUser);
+      setUser(decodedUser as User);
+      push("/users");
+    } catch (error) {
+      let message;
+      if (axios.isAxiosError(error) && error.response) {
+        message = error.response.data.message;
+      } else message = String(error);
+      toast.error(message);
+    }
   };
 
-  const handleLogin = (data: FormData) => {
-    login(data.email, data.password);
+  const handleLogin = async (data: FormData) => {
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_HOST}/api/login`,
+        {
+          email: data.email,
+          password: data.password,
+        }
+      );
+      console.log(response.data);
+      localStorage.setItem("token", response.data.token);
+      const decodedUser = jwt.verify(
+        response.data.token,
+        `${process.env.NEXT_PUBLIC_JWT_SECRET}`
+      );
+      setUser(decodedUser as User);
+      push("/users");
+    } catch (error) {
+      let message;
+      if (axios.isAxiosError(error) && error.response) {
+        message = error.response.data.message;
+      } else message = String(error);
+      toast.error(message);
+    }
   };
 
   const onSubmit = (data: FormData) => {

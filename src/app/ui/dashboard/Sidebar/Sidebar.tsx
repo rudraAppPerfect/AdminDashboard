@@ -3,16 +3,16 @@
 import Image from "next/image";
 import React, { useContext } from "react";
 import AVATAR from "../../../../../public/noavatar.png";
-import AuthContext from "@/contextApi/AuthProvider";
+import { UserContext, UserContextType } from "@/contextApi/UserState";
 
 const Sidebar = () => {
-  const authContext = useContext(AuthContext);
+  const context = useContext(UserContext);
 
-  if (!authContext) {
+  if (!context) {
     return null;
   }
 
-  const { logout, user } = authContext;
+  const { logOut, user } = context as UserContextType;
 
   return (
     <div className="text-white hidden lg:block w-[25%] min-h-screen bg-slate-800 p-8">
@@ -25,14 +25,18 @@ const Sidebar = () => {
           />
 
           <div className="ml-4">
-            <h1 className="text-lg">{user?.email.split("@")[0]}</h1>
-            <h1 className="text-sm">{user?.role}</h1>
+            <h1 className="text-lg">{user?.name}</h1>
+            {user?.role === "Admin" ? (
+              <h1 className="text-sm">Admin</h1>
+            ) : (
+              <h1 className="text-sm">User</h1>
+            )}
           </div>
         </div>
 
         <button
           className="bg-red-300 rounded-md py-1 xl:w-[50%] w-[70%]"
-          onClick={() => logout()}
+          onClick={() => logOut()}
         >
           Log Out
         </button>

@@ -16,7 +16,7 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
-    <div className="flex justify-between items-center mt-4">
+    <div className="flex justify-between items-center text-white w-[90%]">
       <div className="flex items-center">
         <button onClick={() => onPageChange(1)}>&lt;&lt;</button>
         <button
