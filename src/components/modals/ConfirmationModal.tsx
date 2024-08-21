@@ -9,8 +9,14 @@ import axios from "axios";
 const ConfirmationModal = () => {
   const { isOpen, onClose, type, data } = useModal();
   const context = useContext(UserContext);
-  const { usersArray, setUsersArray, currentPage, getUsers } =
-    context as UserContextType;
+  const {
+    usersArray,
+    setUsersArray,
+    currentPage,
+    getUsers,
+    usersRole,
+    usersStatus,
+  } = context as UserContextType;
 
   const isModalOpen = isOpen && (type == "deleteUser" || type == "deleteUsers");
 
@@ -27,13 +33,9 @@ const ConfirmationModal = () => {
           },
         }
       );
-      const updatedArray = usersArray.filter(
-        (item: User) => data.id != item.id
-      );
-      setUsersArray(updatedArray);
       onClose();
       toast.success("Deleted user successfully");
-      getUsers(currentPage);
+      getUsers(currentPage, usersRole, usersStatus);
     } catch (error) {
       let message;
       if (axios.isAxiosError(error) && error.response) {
@@ -62,20 +64,13 @@ const ConfirmationModal = () => {
 
       if (data?.usersData) {
         await Promise.all(data.usersData.map((el: User) => deleteUser(el.id)));
-
-        const updatedArray = usersArray.filter(
-          (item: User) =>
-            !data.usersData?.some((user: User) => user.id === item.id)
-        );
-
-        setUsersArray(updatedArray);
         toast.success("Deleted users successfully");
       } else {
         toast.error("No users to delete.");
       }
 
       onClose();
-      getUsers(currentPage);
+      getUsers(currentPage,usersRole,usersStatus);
     } catch (error) {
       let message;
       if (axios.isAxiosError(error) && error.response) {

@@ -35,7 +35,11 @@ async function getUsers(req: NextApiRequest, res: NextApiResponse) {
       });
 
       const totalUsers = await prisma.user.count({
-        where: isAdmin ? {} : { role: "User" },
+        where: {
+          ...(!isAdmin ? { role: "User" } : {}),
+          ...(usersRole === "" ? {} : { role: usersRole as Role }),
+          ...(usersStatus === "" ? {} : { status: usersStatus as Status }),
+        },
       });
 
       res.status(200).json({
@@ -45,7 +49,7 @@ async function getUsers(req: NextApiRequest, res: NextApiResponse) {
         },
       });
     } catch (error) {
-      res.status(500).json({ error: "Error fetching users" });
+      res.status(500).json({ message: "Error fetching users" });
     }
   } else {
     return res.status(405).end(`Method ${req.method} Not Allowed`);

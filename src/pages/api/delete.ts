@@ -25,7 +25,7 @@ async function deleteUser(req: NextApiRequest, res: NextApiResponse) {
         .json({ message: "User deleted successfully", deletedUser });
     } catch (error) {
       console.error("Error deleting user:", error);
-      return res.status(500).json({ error: "Error deleting user" });
+      return res.status(500).json({ message: "Error deleting user" });
     }
   } else {
     return res.status(405).end(`Method ${req.method} Not Allowed`);

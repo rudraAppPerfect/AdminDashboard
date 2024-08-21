@@ -39,12 +39,12 @@ const UsersPage = () => {
     logOut,
     user,
     setUser,
-    setUsersArray,
     totalUsers,
-    setTotalUsers,
     currentPage,
     setCurrentPage,
     getUsers,
+    usersRole,
+    usersStatus,
   } = context as UserContextType;
 
   const [tempArray, setTempArray] = useState(usersArray);
@@ -76,7 +76,6 @@ const UsersPage = () => {
           },
         }
       );
-      console.log(response.data);
       setUser(response.data);
       setIsAdmin(response.data.role === "Admin");
     } catch (error) {
@@ -94,7 +93,7 @@ const UsersPage = () => {
       try {
         getUserDetails();
         push("/users");
-        getUsers(currentPage);
+        getUsers(currentPage, "", "");
       } catch (error) {
         console.error("Invalid token");
       }
@@ -106,17 +105,7 @@ const UsersPage = () => {
 
   const handlePageChange = async (newPage: number) => {
     try {
-      console.log(newPage);
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_HOST}/api/users?page=${newPage}`,
-        {
-          headers: {
-            "auth-token": localStorage.getItem("token"),
-          },
-        }
-      );
-      setUsersArray(response.data.data);
-      setTotalUsers(response.data.meta.totalUsers);
+      getUsers(newPage, usersRole, usersStatus);
       setCurrentPage(newPage);
     } catch (error) {
       let message;

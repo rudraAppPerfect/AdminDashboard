@@ -24,9 +24,13 @@ export interface UserContextType {
   logOut: () => void;
   totalUsers: number;
   setTotalUsers: (value: number | ((prev: number) => number)) => void;
-  getUsers: (page: number) => void;
+  getUsers: (page: number, usersRole: string, usersStatus: string) => void;
   currentPage: number;
   setCurrentPage: (value: number) => void;
+  usersRole: string;
+  setUsersRole: (value: string) => void;
+  usersStatus: string;
+  setUsersStatus: (value: string) => void;
 }
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -44,6 +48,8 @@ const UserState = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | undefined>(undefined);
   const [totalUsers, setTotalUsers] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [usersRole, setUsersRole] = useState("");
+  const [usersStatus, setUsersStatus] = useState("");
 
   const logOut = () => {
     localStorage.removeItem("token");
@@ -51,10 +57,14 @@ const UserState = ({ children }: { children: ReactNode }) => {
     push("/");
   };
 
-  const getUsers = async (page: number) => {
+  const getUsers = async (
+    page: number,
+    usersRole: string,
+    usersStatus: string
+  ) => {
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_HOST}/api/users?page=${page}`,
+        `${process.env.NEXT_PUBLIC_HOST}/api/users?page=${page}&usersRole=${usersRole}&usersStatus=${usersStatus}`,
         {
           headers: {
             "auth-token": localStorage.getItem("token"),
@@ -95,6 +105,10 @@ const UserState = ({ children }: { children: ReactNode }) => {
         getUsers,
         currentPage,
         setCurrentPage,
+        usersRole,
+        setUsersRole,
+        usersStatus,
+        setUsersStatus
       }}
     >
       {children}

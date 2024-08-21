@@ -8,12 +8,21 @@ const FiltersModal = () => {
   const { isOpen, onClose, type } = useModal();
   const isModalOpen = isOpen && type == "filters";
 
-  const [usersRole, setUsersRole] = useState("");
-  const [usersStatus, setUsersStatus] = useState("");
-
   const context = useContext(UserContext);
-  const { setUsersArray, user } = context as UserContextType;
+  const {
+    user,
+    getUsers,
+    usersRole,
+    setUsersRole,
+    usersStatus,
+    setUsersStatus,
+  } = context as UserContextType;
   const isAdmin = user?.role === "Admin";
+
+  const handleApply = () => {
+    getUsers(1, usersRole, usersStatus);
+    onClose();
+  };
 
   return (
     <Modal
@@ -21,13 +30,14 @@ const FiltersModal = () => {
       onClose={() => {
         onClose();
       }}
+      typeOfModal="Delete"
     >
       <div className="flex flex-col pb-4 pt-2 pl-3">
         <div>
           <h1 className="font-semibold text-lg">Role :</h1>
           <div className="flex items-center mt-4">
             <div className="flex items-center gap-2">
-              {usersRole == "Admin" || usersRole=='' ? (
+              {usersRole == "Admin" || usersRole == "" ? (
                 <>
                   <button onClick={() => setUsersRole("User")}>
                     <Square />
@@ -48,7 +58,7 @@ const FiltersModal = () => {
 
             {isAdmin && (
               <div className="flex items-center gap-2 ml-4">
-                {usersRole == "User" || usersRole=='' ? (
+                {usersRole == "User" || usersRole == "" ? (
                   <>
                     <button onClick={() => setUsersRole("Admin")}>
                       <Square />
@@ -74,29 +84,50 @@ const FiltersModal = () => {
           <h1 className="font-semibold text-lg">Status :</h1>
           <div className="flex items-center mt-4">
             <div className="flex items-center gap-2">
-              {usersStatus=='Inactive' || usersStatus == "" ? (
-                <button onClick={() => setUsersStatus("Active")}>
-                  <Square />
-                </button>
+              {usersStatus == "Inactive" || usersStatus == "" ? (
+                <>
+                  <button onClick={() => setUsersStatus("Active")}>
+                    <Square />
+                  </button>
+                  <h1 className="text-base font-medium">Active</h1>
+                </>
               ) : (
-                <button>
-                  <SquareCheck onClick={() => setUsersStatus("")} />
-                </button>
+                <>
+                  <button>
+                    <SquareCheck onClick={() => setUsersStatus("")} />
+                  </button>
+                  <h1 className="text-base font-medium">Active</h1>
+                </>
               )}
             </div>
 
-            <div className="flex items-center gap-2 ml-4">
-              {usersStatus=='Active' || usersStatus == "" ? (
-                <button onClick={() => setUsersStatus("Inactive")}>
-                  <Square />
-                </button>
+            <div className="flex items-center gap-2 ml-3">
+              {usersStatus == "Active" || usersStatus == "" ? (
+                <>
+                  <button onClick={() => setUsersStatus("Inactive")}>
+                    <Square />
+                  </button>
+                  <h1 className="text-base font-medium">Inactive</h1>
+                </>
               ) : (
-                <button>
-                  <SquareCheck onClick={() => setUsersStatus("")} />
-                </button>
+                <>
+                  <button>
+                    <SquareCheck onClick={() => setUsersStatus("")} />
+                  </button>
+                  <h1 className="text-base font-medium">Inactive</h1>
+                </>
               )}
             </div>
           </div>
+        </div>
+
+        <div className="mt-5 flex justify-end">
+          <button
+            onClick={handleApply}
+            className="p-2 px-4 bg-green-400 text-white rounded-md"
+          >
+            Apply
+          </button>
         </div>
       </div>
     </Modal>

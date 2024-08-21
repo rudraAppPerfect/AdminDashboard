@@ -7,18 +7,18 @@ const prisma = new PrismaClient();
 async function editUser(req: NextApiRequest, res: NextApiResponse) {
   const user = (req as any).user;
 
-  if (user.role==='User') {
+  if (user.role === "User") {
     return res.status(403).json({ message: "Forbidden: Admins only" });
   }
 
   if (req.method === "POST") {
-    const { userId, name, email, role, status, password} = req.body;
+    const { userId, name, email, role, status, password } = req.body;
     try {
       const user = await prisma.user.findUnique({
         where: { email: email },
       });
 
-      if (user) {
+      if (user && userId != user.id) {
         return res
           .status(401)
           .json({ message: "User with this email already exists." });
@@ -40,7 +40,7 @@ async function editUser(req: NextApiRequest, res: NextApiResponse) {
       return res.status(200).json({ message: "User updated successfully" });
     } catch (error) {
       console.error("Error updating user:", error);
-      return res.status(500).json({ error: "Error updating user" });
+      return res.status(500).json({ message: "Error updating user" });
     }
   } else {
     return res.status(405).end(`Method ${req.method} Not Allowed`);

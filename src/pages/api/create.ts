@@ -40,7 +40,7 @@ async function createUser(req: NextApiRequest, res: NextApiResponse) {
       });
       res.status(200).json(newUser);
     } catch (error) {
-      res.status(500).json({ error: "Error adding user" });
+      res.status(500).json({ message: "Error adding user" });
     }
   } else {
     return res.status(405).end(`Method ${req.method} Not Allowed`);

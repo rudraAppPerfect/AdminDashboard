@@ -25,7 +25,7 @@ const UserModal = () => {
   const isModalOpen = isOpen && (type === "createUser" || type === "editUser");
 
   const context = useContext(UserContext);
-  const { usersArray, setUsersArray, id, getUsers, currentPage } =
+  const { usersArray, setUsersArray, id, getUsers, currentPage,usersRole,usersStatus } =
     context as UserContextType;
 
   const {
@@ -68,17 +68,10 @@ const UserModal = () => {
           },
         }
       );
-      setUsersArray([
-        {
-          id: usersArray[0].id + 1,
-          ...data,
-        },
-        ...usersArray,
-      ]);
       reset();
       onClose();
       toast.success("User created successfully");
-      getUsers(currentPage);
+      getUsers(currentPage,usersRole,usersStatus);
     } catch (error) {
       let message;
       if (axios.isAxiosError(error) && error.response) {

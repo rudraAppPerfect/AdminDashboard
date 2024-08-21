@@ -13,7 +13,7 @@ export default async function UserLogin(
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ error: "Email and password are required" });
+      return res.status(400).json({ message: "Email and password are required" });
     }
 
     try {
@@ -22,7 +22,13 @@ export default async function UserLogin(
       });
 
       if (!user) {
-        return res.status(401).json({ error: "Invalid email" });
+        return res.status(401).json({ message: "Invalid email" });
+      }
+
+      const isValidPassword = await bcrypt.compare(password, user.password);
+
+      if (!isValidPassword) {
+        return res.status(401).json({ message: "Invalid password" });
       }
 
       if (user.status === "Inactive") {
@@ -31,21 +37,15 @@ export default async function UserLogin(
           .json({ message: "User is Inactive. Please contact Admin." });
       }
 
-      const isValidPassword = await bcrypt.compare(password, user.password);
-
-      if (!isValidPassword) {
-        return res.status(401).json({ error: "Invalid password" });
-      }
-
       const token = jwt.sign(
-        { email: user.email, isAdmin: user.isAdmin },
+        { email: user.email },
         process.env.NEXT_PUBLIC_JWT_SECRET as string
       );
 
       return res.status(200).json({ message: "Login successful", token });
     } catch (error) {
       console.error("Error logging in user:", error);
-      return res.status(500).json({ error: "Error logging in user" });
+      return res.status(500).json({ message: "Error logging in user" });
     }
   } else {
     return res.status(405).end(`Method ${req.method} Not Allowed`);

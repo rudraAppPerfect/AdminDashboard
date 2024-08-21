@@ -61,13 +61,11 @@ export default function Home() {
           password: data.password,
         }
       );
-      console.log(response.data);
       localStorage.setItem("token", response.data.token);
       const decodedUser = jwt.verify(
         response.data.token as string,
         process.env.NEXT_PUBLIC_JWT_SECRET as string
       );
-      console.log("dUser: ", decodedUser);
       setUser(decodedUser as User);
       push("/users");
     } catch (error) {
@@ -88,7 +86,6 @@ export default function Home() {
           password: data.password,
         }
       );
-      console.log(response.data);
       localStorage.setItem("token", response.data.token);
       const decodedUser = jwt.verify(
         response.data.token,
