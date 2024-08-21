@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { PrismaClient } from "@prisma/client";
 import authMiddleware from "@/middlewares/AuthMiddleWare";
+import { Role, Status } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -8,7 +9,7 @@ async function getUsers(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
     const user = (req as any).user;
 
-    const { page, usersRole, usersStatus } = req.query as string[];
+    const { page, usersRole, usersStatus } = req.query;
     const pageNumber = parseInt(page as string, 10);
     const pageSize = 10;
 
@@ -20,7 +21,8 @@ async function getUsers(req: NextApiRequest, res: NextApiResponse) {
         take: pageSize,
         where: {
           ...(!isAdmin ? { role: "User" } : {}),
-          ...(usersRole === "" ? {} : { role: usersRole }),
+          ...(usersRole === "" ? {} : { role: usersRole as Role }),
+          ...(usersStatus === "" ? {} : { status: usersStatus as Status }),
         },
         orderBy: [
           {

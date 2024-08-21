@@ -1,7 +1,7 @@
 import { User } from "@/app/users/page";
 import { create } from "zustand";
 
-export type ModalType = "createUser" | "editUser" | "deleteUser" | "deleteUsers";
+export type ModalType = "createUser" | "editUser" | "deleteUser" | "deleteUsers" | "filters";
 
 interface ModalData {
   id? : number,

@@ -49,8 +49,6 @@ const UsersPage = () => {
 
   const [tempArray, setTempArray] = useState(usersArray);
   const [isAdmin, setIsAdmin] = useState(user?.role === "Admin");
-  const [usersRole, setUsersRole] = useState("");
-  const [usersStatus, setUsersStatus] = useState("");
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -168,14 +166,22 @@ const UsersPage = () => {
             placeholder="Search User"
             className="text-black p-1 px-4 rounded-md outline-none"
           />
-          {toDelete.length > 0 && (
+          <div className="flex items-center">
             <button
-              onClick={() => onOpen("deleteUsers", { usersData: toDelete })}
-              className="bg-red-400 text-white p-1 px-2 rounded-md"
+              onClick={() => onOpen("filters")}
+              className="bg-orange-400 p-1 px-2 rounded-md mr-3"
             >
-              Delete All
+              Filters
             </button>
-          )}
+            {toDelete.length > 0 && (
+              <button
+                onClick={() => onOpen("deleteUsers", { usersData: toDelete })}
+                className="bg-red-400 text-white p-1 px-2 rounded-md"
+              >
+                Delete All
+              </button>
+            )}
+          </div>
         </div>
         {tempArray.length === 0 ? (
           <div className="flex justify-center items-center h-full">

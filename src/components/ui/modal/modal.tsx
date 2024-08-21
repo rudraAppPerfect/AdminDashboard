@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 interface ModalProps {
   open: boolean;
   onClose: () => void;
-  typeOfModal:string
+  typeOfModal?:string
   children: React.ReactNode;
 }
 
