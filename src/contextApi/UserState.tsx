@@ -1,7 +1,13 @@
 "use client";
 
 import { User } from "@/app/users/page";
-import { useState, createContext, ReactNode, useEffect } from "react";
+import {
+  useState,
+  createContext,
+  ReactNode,
+  useEffect,
+  useCallback,
+} from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -24,13 +30,20 @@ export interface UserContextType {
   logOut: () => void;
   totalUsers: number;
   setTotalUsers: (value: number | ((prev: number) => number)) => void;
-  getUsers: (page: number, usersRole: string, usersStatus: string) => void;
+  getUsers: (
+    page: number,
+    usersRole: string,
+    usersStatus: string,
+    query: string
+  ) => void;
   currentPage: number;
   setCurrentPage: (value: number) => void;
   usersRole: string;
   setUsersRole: (value: string) => void;
   usersStatus: string;
   setUsersStatus: (value: string) => void;
+  searchText: string;
+  setSearchText: (value: string) => void;
 }
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -50,6 +63,7 @@ const UserState = ({ children }: { children: ReactNode }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [usersRole, setUsersRole] = useState("");
   const [usersStatus, setUsersStatus] = useState("");
+  const [searchText, setSearchText] = useState("");
 
   const logOut = () => {
     localStorage.removeItem("token");
@@ -57,30 +71,38 @@ const UserState = ({ children }: { children: ReactNode }) => {
     push("/");
   };
 
-  const getUsers = async (
-    page: number,
-    usersRole: string,
-    usersStatus: string
-  ) => {
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_HOST}/api/users?page=${page}&usersRole=${usersRole}&usersStatus=${usersStatus}`,
-        {
-          headers: {
-            "auth-token": localStorage.getItem("token"),
-          },
-        }
-      );
-      setUsersArray(response.data.data);
-      setTotalUsers(response.data.meta.totalUsers);
-    } catch (error) {
-      let message;
-      if (axios.isAxiosError(error) && error.response) {
-        message = error.response.data.message;
-      } else message = String(error);
-      toast.error(message);
-    }
-  };
+  const getUsers = useCallback(
+    async (
+      page: number,
+      usersRole: string,
+      usersStatus: string,
+      query: string
+    ) => {
+      try {
+        // if (process.env.NODE_ENV === "development") {
+        //   const { worker } = await import("@/mocks/browser.mjs");
+        //   await worker.start();
+        // }
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_HOST}/api/users?page=${page}&usersRole=${usersRole}&usersStatus=${usersStatus}&query=${query}`,
+          {
+            headers: {
+              "auth-token": localStorage.getItem("token"),
+            },
+          }
+        );
+        setUsersArray(response.data.data);
+        setTotalUsers(response.data.meta.totalUsers);
+      } catch (error) {
+        let message;
+        if (axios.isAxiosError(error) && error.response) {
+          message = error.response.data.message;
+        } else message = String(error);
+        toast.error(message);
+      }
+    },
+    []
+  );
 
   return (
     <UserContext.Provider
@@ -108,7 +130,9 @@ const UserState = ({ children }: { children: ReactNode }) => {
         usersRole,
         setUsersRole,
         usersStatus,
-        setUsersStatus
+        setUsersStatus,
+        searchText,
+        setSearchText,
       }}
     >
       {children}

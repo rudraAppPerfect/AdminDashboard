@@ -29,7 +29,7 @@ export default async function Register(
         {
           email: newUser.email,
         },
-        process.env.NEXT_PUBLIC_JWT_SECRET as string
+        `${process.env.NEXT_PUBLIC_JWT_SECRET}`
       );
 
       return res

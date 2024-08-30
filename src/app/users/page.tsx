@@ -3,14 +3,14 @@
 import { useModal } from "@/hooks/use-modal-store";
 import Image from "next/image";
 import UserImage from "../../../public/noavatar.png";
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { UserContext, UserContextType } from "@/contextApi/UserState";
 import PaginationControls from "@/components/ui/Pagination/PaginationControls";
 import { Square, SquareCheck } from "lucide-react";
-import jwt from "jsonwebtoken";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
+import SearchBar from "@/components/ui/SearchBar/SearchBar";
 
 export interface User {
   id: number;
@@ -23,7 +23,6 @@ export interface User {
 
 const UsersPage = () => {
   const { onOpen } = useModal();
-  const [searchText, setSearchText] = useState("");
   const [toDelete, setToDelete] = useState([] as User[]);
 
   const { push } = useRouter();
@@ -41,32 +40,17 @@ const UsersPage = () => {
     setUser,
     totalUsers,
     currentPage,
-    setCurrentPage,
-    getUsers,
-    usersRole,
-    usersStatus,
+    setCurrentPage
   } = context as UserContextType;
 
-  const [tempArray, setTempArray] = useState(usersArray);
   const [isAdmin, setIsAdmin] = useState(user?.role === "Admin");
   const itemsPerPage = 10;
-
-  useEffect(() => {
-    let finalResults = usersArray;
-
-    if (searchText) {
-      finalResults = usersArray.filter((user: User) =>
-        user.name.toLowerCase().includes(searchText.toLowerCase())
-      );
-    }
-    setTempArray(finalResults);
-  }, [searchText, usersArray]);
 
   useEffect(() => {
     setToDelete([]);
   }, [usersArray]);
 
-  async function getUserDetails() {
+  const getUserDetails = useCallback(async () => {
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_HOST}/api/getUser`,
@@ -85,7 +69,7 @@ const UsersPage = () => {
       } else message = String(error);
       toast.error(message);
     }
-  }
+  }, [setUser]);
 
   useEffect(() => {
     const jwtToken = localStorage.getItem("token");
@@ -93,39 +77,42 @@ const UsersPage = () => {
       try {
         getUserDetails();
         push("/users");
-        getUsers(currentPage, "", "");
       } catch (error) {
         console.error("Invalid token");
       }
     } else {
       push("/");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [push]);
+  }, [push, getUserDetails]);
 
   const handlePageChange = async (newPage: number) => {
-    try {
-      getUsers(newPage, usersRole, usersStatus);
-      setCurrentPage(newPage);
-    } catch (error) {
-      let message;
-      if (axios.isAxiosError(error) && error.response) {
-        message = error.response.data.message;
-      } else message = String(error);
-      toast.error(message);
-    }
+    setCurrentPage(newPage);
+  };
+
+  const handleSelectAll = () => {
+    setToDelete(usersArray);
+  };
+
+  const handleDeSelectAll = () => {
+    setToDelete([]);
+  };
+
+  const handleDeSelect = (user: User) => {
+    const updated = toDelete.filter((item: User) => item != user);
+    setToDelete(updated);
+  };
+
+  const handleEdit = (user: User) => {
+    setId(user.id);
+    setName(user.name);
+    setEmail(user.email);
+    setRole(user.role);
+    setStatus(user.status);
+    onOpen("editUser");
   };
 
   return (
     <div className="w-full flex flex-col lg:py-12 py-4 items-center">
-      {isAdmin && (
-        <div>
-          <h1 className="text-white font-medium">
-            Total Selected Users : {toDelete.length}
-          </h1>
-        </div>
-      )}
-
       <div className="bg-slate-700 p-4 rounded-lg w-[98%] sm:w-[90%] flex items-center  justify-between mt-2">
         <h1 className="text-white hidden lg:block">
           Total Users: {totalUsers}
@@ -146,15 +133,19 @@ const UsersPage = () => {
         )}
       </div>
 
-      <div className="bg-slate-700 text-white p-4 rounded-lg mt-8 h-[80%] mb-4 w-[98%] sm:w-[90%] ">
+      <div className="bg-slate-700 text-white p-4 rounded-lg mt-8 h-full mb-4 w-[98%] sm:w-[90%] ">
         <div className="flex items-center justify-between">
-          <input
-            type="text"
-            onChange={(e) => setSearchText(e.target.value)}
-            value={searchText}
-            placeholder="Search User"
-            className="text-black p-1 px-4 rounded-md outline-none"
-          />
+          <div className="flex items-center">
+            <SearchBar />
+            {isAdmin && (
+              <div>
+                <h1 className="text-white ml-4">
+                  Total Selected Users : {toDelete.length}
+                </h1>
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center">
             <button
               onClick={() => onOpen("filters")}
@@ -172,7 +163,7 @@ const UsersPage = () => {
             )}
           </div>
         </div>
-        {tempArray.length === 0 ? (
+        {usersArray.length === 0 ? (
           <div className="flex justify-center items-center h-full">
             <h1 className="text-white font-bold text-2xl">No Users Found.</h1>
           </div>
@@ -180,7 +171,21 @@ const UsersPage = () => {
           <table className="w-full mt-4 text-xs sm:text-base">
             <thead>
               <tr>
-                {isAdmin && <td className="w-[4%]"></td>}
+                {isAdmin && (
+                  <td className="w-[4%]">
+                    <div className="flex justify-center items-center">
+                      {toDelete.length != 10 ? (
+                        <button onClick={handleSelectAll}>
+                          <Square />
+                        </button>
+                      ) : (
+                        <button onClick={handleDeSelectAll}>
+                          <SquareCheck />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                )}
                 <td className="w-[16%] md:pl-4">Name</td>
                 <td className="w-[20%] text-center">Email</td>
                 <td className="w-[20%] text-center">Role</td>
@@ -189,21 +194,14 @@ const UsersPage = () => {
               </tr>
             </thead>
             <tbody>
-              {tempArray?.map((user: User) => {
+              {usersArray?.map((user: User) => {
                 return (
                   <tr key={user.id}>
                     {isAdmin && (
                       <td className="w-[4%] py-4">
                         <div className="flex items-center justify-center">
                           {toDelete.includes(user) ? (
-                            <button
-                              onClick={() => {
-                                const updated = toDelete.filter(
-                                  (item: User) => item != user
-                                );
-                                setToDelete(updated);
-                              }}
-                            >
+                            <button onClick={() => handleDeSelect(user)}>
                               <SquareCheck />
                             </button>
                           ) : (
@@ -233,14 +231,7 @@ const UsersPage = () => {
                       <td className="w-[20%] text-center py-4">
                         <div className="md:flex items-center justify-center">
                           <button
-                            onClick={() => {
-                              setId(user.id);
-                              setName(user.name);
-                              setEmail(user.email);
-                              setRole(user.role);
-                              setStatus(user.status);
-                              onOpen("editUser");
-                            }}
+                            onClick={() => handleEdit(user)}
                             className="py-1 px-3 bg-yellow-400 text-white rounded-md"
                           >
                             Edit

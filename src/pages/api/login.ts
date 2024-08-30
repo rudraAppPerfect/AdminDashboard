@@ -39,7 +39,7 @@ export default async function UserLogin(
 
       const token = jwt.sign(
         { email: user.email },
-        process.env.NEXT_PUBLIC_JWT_SECRET as string
+        `${process.env.NEXT_PUBLIC_JWT_SECRET}`
       );
 
       return res.status(200).json({ message: "Login successful", token });

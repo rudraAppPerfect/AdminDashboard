@@ -32,12 +32,18 @@ export default function Home() {
       try {
         const decodedUser = jwt.verify(
           jwtToken,
-          process.env.NEXT_PUBLIC_JWT_SECRET as string
+          `${process.env.NEXT_PUBLIC_JWT_SECRET}`
         );
         setUser(decodedUser as User);
         push("/users");
       } catch (error) {
-        console.error("Invalid token");
+        console.error("Token verification error:", error);
+        // Optionally handle specific error types
+        if (error instanceof jwt.JsonWebTokenError) {
+          console.error("JWT Error:", error.message);
+        } else if (error instanceof jwt.TokenExpiredError) {
+          console.error("Token expired:", error.message);
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -64,7 +70,7 @@ export default function Home() {
       localStorage.setItem("token", response.data.token);
       const decodedUser = jwt.verify(
         response.data.token as string,
-        process.env.NEXT_PUBLIC_JWT_SECRET as string
+        `${process.env.NEXT_PUBLIC_JWT_SECRET}`
       );
       setUser(decodedUser as User);
       push("/users");

@@ -16,13 +16,9 @@ const FiltersModal = () => {
     setUsersRole,
     usersStatus,
     setUsersStatus,
+    searchText
   } = context as UserContextType;
   const isAdmin = user?.role === "Admin";
-
-  const handleApply = () => {
-    getUsers(1, usersRole, usersStatus);
-    onClose();
-  };
 
   return (
     <Modal
@@ -119,15 +115,6 @@ const FiltersModal = () => {
               )}
             </div>
           </div>
-        </div>
-
-        <div className="mt-5 flex justify-end">
-          <button
-            onClick={handleApply}
-            className="p-2 px-4 bg-green-400 text-white rounded-md"
-          >
-            Apply
-          </button>
         </div>
       </div>
     </Modal>

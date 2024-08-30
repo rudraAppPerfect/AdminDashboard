@@ -9,7 +9,7 @@ async function getUsers(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
     const user = (req as any).user;
 
-    const { page, usersRole, usersStatus } = req.query;
+    const { page, usersRole, usersStatus, query } = req.query;
     const pageNumber = parseInt(page as string, 10);
     const pageSize = 10;
 
@@ -23,6 +23,10 @@ async function getUsers(req: NextApiRequest, res: NextApiResponse) {
           ...(!isAdmin ? { role: "User" } : {}),
           ...(usersRole === "" ? {} : { role: usersRole as Role }),
           ...(usersStatus === "" ? {} : { status: usersStatus as Status }),
+          name: {
+            contains: query as string,
+            mode: "insensitive",
+          },
         },
         orderBy: [
           {
@@ -39,6 +43,10 @@ async function getUsers(req: NextApiRequest, res: NextApiResponse) {
           ...(!isAdmin ? { role: "User" } : {}),
           ...(usersRole === "" ? {} : { role: usersRole as Role }),
           ...(usersStatus === "" ? {} : { status: usersStatus as Status }),
+          name: {
+            contains: query as string,
+            mode: "insensitive",
+          },
         },
       });
 

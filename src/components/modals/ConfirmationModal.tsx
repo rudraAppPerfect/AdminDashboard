@@ -16,6 +16,7 @@ const ConfirmationModal = () => {
     getUsers,
     usersRole,
     usersStatus,
+    searchText
   } = context as UserContextType;
 
   const isModalOpen = isOpen && (type == "deleteUser" || type == "deleteUsers");
@@ -35,7 +36,7 @@ const ConfirmationModal = () => {
       );
       onClose();
       toast.success("Deleted user successfully");
-      getUsers(currentPage, usersRole, usersStatus);
+      getUsers(currentPage, usersRole, usersStatus,searchText);
     } catch (error) {
       let message;
       if (axios.isAxiosError(error) && error.response) {
@@ -70,7 +71,7 @@ const ConfirmationModal = () => {
       }
 
       onClose();
-      getUsers(currentPage,usersRole,usersStatus);
+      getUsers(currentPage,usersRole,usersStatus,searchText);
     } catch (error) {
       let message;
       if (axios.isAxiosError(error) && error.response) {
