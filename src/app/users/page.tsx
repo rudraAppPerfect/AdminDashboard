@@ -3,9 +3,14 @@
 import { useModal } from "@/hooks/use-modal-store";
 import Image from "next/image";
 import UserImage from "../../../public/noavatar.png";
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { UserContext, UserContextType } from "@/contextApi/UserState";
 import PaginationControls from "@/components/ui/Pagination/PaginationControls";
+import { Square, SquareCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import toast from "react-hot-toast";
+import SearchBar from "@/components/ui/SearchBar/SearchBar";
 
 export interface User {
   id: number;
@@ -13,139 +18,248 @@ export interface User {
   email: string;
   role: string;
   status: string;
+  password: string;
 }
 
 const UsersPage = () => {
   const { onOpen } = useModal();
-  const [searchText, setSearchText] = useState("");
+  const [toDelete, setToDelete] = useState([] as User[]);
+
+  const { push } = useRouter();
 
   const context = useContext(UserContext);
   const {
     usersArray,
-    setUsersArray,
-    name,
     setName,
-    email,
     setEmail,
-    role,
     setRole,
-    status,
     setStatus,
-    id,
     setId,
+    logOut,
+    user,
+    setUser,
+    totalUsers,
+    currentPage,
+    setCurrentPage
   } = context as UserContextType;
 
-  const [tempArray, setTempArray] = useState(usersArray);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 2;
+  const [isAdmin, setIsAdmin] = useState(user?.role === "Admin");
+  const itemsPerPage = 10;
 
   useEffect(() => {
-    let finalResults = usersArray;
+    setToDelete([]);
+  }, [usersArray]);
 
-    if (searchText) {
-      finalResults = usersArray.filter((user: User) =>
-        user.name.toLowerCase().includes(searchText.toLowerCase())
+  const getUserDetails = useCallback(async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_HOST}/api/getUser`,
+        {
+          headers: {
+            "auth-token": localStorage.getItem("token"),
+          },
+        }
       );
+      setUser(response.data);
+      setIsAdmin(response.data.role === "Admin");
+    } catch (error) {
+      let message;
+      if (axios.isAxiosError(error) && error.response) {
+        message = error.response.data.message;
+      } else message = String(error);
+      toast.error(message);
     }
+  }, [setUser]);
 
-    setTempArray(finalResults);
-  }, [searchText,usersArray]);
+  useEffect(() => {
+    const jwtToken = localStorage.getItem("token");
+    if (jwtToken) {
+      try {
+        getUserDetails();
+        push("/users");
+      } catch (error) {
+        console.error("Invalid token");
+      }
+    } else {
+      push("/");
+    }
+  }, [push, getUserDetails]);
 
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedUsers = tempArray.slice(startIndex, endIndex);
-
-  const handlePageChange = (newPage: number) => {
+  const handlePageChange = async (newPage: number) => {
     setCurrentPage(newPage);
   };
 
+  const handleSelectAll = () => {
+    setToDelete(usersArray);
+  };
+
+  const handleDeSelectAll = () => {
+    setToDelete([]);
+  };
+
+  const handleDeSelect = (user: User) => {
+    const updated = toDelete.filter((item: User) => item != user);
+    setToDelete(updated);
+  };
+
+  const handleEdit = (user: User) => {
+    setId(user.id);
+    setName(user.name);
+    setEmail(user.email);
+    setRole(user.role);
+    setStatus(user.status);
+    onOpen("editUser");
+  };
+
   return (
-    <div className="p-12 w-full">
-      <div className="bg-slate-700 p-4 rounded-lg w-full flex items-center justify-between">
-        <h1 className="text-white">Dashboard</h1>
+    <div className="w-full flex flex-col lg:py-12 py-4 items-center">
+      <div className="bg-slate-700 p-4 rounded-lg w-[98%] sm:w-[90%] flex items-center  justify-between mt-2">
+        <h1 className="text-white hidden lg:block">
+          Total Users: {totalUsers}
+        </h1>
         <button
-          className="bg-green-400 text-white p-1 px-3 rounded-md outline-none"
-          onClick={() => onOpen("createUser")}
+          className="bg-red-300 lg:hidden rounded-md py-1 w-[20%] font-medium"
+          onClick={() => logOut()}
         >
-          Create +
+          Log Out
         </button>
+        {isAdmin && (
+          <button
+            className="bg-green-400 text-white p-1 px-3 rounded-md outline-none"
+            onClick={() => onOpen("createUser")}
+          >
+            Create +
+          </button>
+        )}
       </div>
 
-      <div className="bg-slate-700 text-white p-4 rounded-lg mt-8">
-        <input
-          type="text"
-          onChange={(e) => setSearchText(e.target.value)}
-          value={searchText}
-          placeholder="Search User"
-          className="text-black p-1 px-4 rounded-md outline-none"
-        />
-        <table>
-          <thead>
-            <tr>
-              <td className="p-4">Name</td>
-              <td className="p-4 px-16">Email</td>
-              <td className="p-4 px-16">Role</td>
-              <td className="p-4 px-16">Status</td>
-              <td className="p-4 px-16">Action</td>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedUsers.map((user: User) => {
-              return (
-                <tr key={user.id}>
-                  <td className="p-4">
-                    <div className="flex items-center">
-                      <Image
-                        src={UserImage}
-                        alt="user"
-                        className="w-[5%] h-[5%] rounded-full"
-                      />
-                      <h1 className="ml-3">{user.name}</h1>
+      <div className="bg-slate-700 text-white p-4 rounded-lg mt-8 h-full mb-4 w-[98%] sm:w-[90%] ">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <SearchBar />
+            {isAdmin && (
+              <div>
+                <h1 className="text-white ml-4">
+                  Total Selected Users : {toDelete.length}
+                </h1>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center">
+            <button
+              onClick={() => onOpen("filters")}
+              className="bg-orange-400 p-1 px-2 rounded-md mr-3"
+            >
+              Filters
+            </button>
+            {toDelete.length > 0 && (
+              <button
+                onClick={() => onOpen("deleteUsers", { usersData: toDelete })}
+                className="bg-red-400 text-white p-1 px-2 rounded-md"
+              >
+                Delete All
+              </button>
+            )}
+          </div>
+        </div>
+        {usersArray.length === 0 ? (
+          <div className="flex justify-center items-center h-full">
+            <h1 className="text-white font-bold text-2xl">No Users Found.</h1>
+          </div>
+        ) : (
+          <table className="w-full mt-4 text-xs sm:text-base">
+            <thead>
+              <tr>
+                {isAdmin && (
+                  <td className="w-[4%]">
+                    <div className="flex justify-center items-center">
+                      {toDelete.length != 10 ? (
+                        <button onClick={handleSelectAll}>
+                          <Square />
+                        </button>
+                      ) : (
+                        <button onClick={handleDeSelectAll}>
+                          <SquareCheck />
+                        </button>
+                      )}
                     </div>
                   </td>
-                  <td className="py-4 pl-12">{user.email}</td>
-                  <td className="py-4 pl-12">{user.role}</td>
-                  <td className="py-4 pl-12">{user.status}</td>
-                  <td className="py-4 pl-12">
-                    <div className="flex items-center">
-                      <button
-                        onClick={() => {
-                          setId(user.id);
-                          setName(user.name);
-                          setEmail(user.email);
-                          setRole(user.role);
-                          setStatus(user.status);
-                          onOpen("editUser");
-                        }}
-                        className="py-1 px-3 bg-yellow-400 text-white rounded-md"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => {
-                          const updatedArray = usersArray.filter(
-                            (item: User) => user.id != item.id
-                          );
-                          setUsersArray(updatedArray);
-                        }}
-                        className="py-1 px-3 bg-red-400 text-white rounded-md ml-3"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        <PaginationControls
-          currentPage={currentPage}
-          totalItems={tempArray.length}
-          itemsPerPage={itemsPerPage}
-          onPageChange={handlePageChange}
-        />
+                )}
+                <td className="w-[16%] md:pl-4">Name</td>
+                <td className="w-[20%] text-center">Email</td>
+                <td className="w-[20%] text-center">Role</td>
+                <td className="w-[20%] text-center">Status</td>
+                {isAdmin && <td className="w-[20%] text-center">Action</td>}
+              </tr>
+            </thead>
+            <tbody>
+              {usersArray?.map((user: User) => {
+                return (
+                  <tr key={user.id}>
+                    {isAdmin && (
+                      <td className="w-[4%] py-4">
+                        <div className="flex items-center justify-center">
+                          {toDelete.includes(user) ? (
+                            <button onClick={() => handleDeSelect(user)}>
+                              <SquareCheck />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setToDelete([...toDelete, user])}
+                            >
+                              <Square />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    )}
+                    <td className="w-[16%] py-4">
+                      <div className="flex items-center md:ml-4">
+                        <Image
+                          src={UserImage}
+                          alt="user"
+                          className="w-[10%] h-[10%] rounded-full"
+                        />
+                        <h1 className="lg:ml-3 ml-1">{user.name}</h1>
+                      </div>
+                    </td>
+                    <td className="w-[20%] text-center py-4">{user.email}</td>
+                    <td className="w-[20%] text-center py-4">{user.role}</td>
+                    <td className="w-[20%] text-center py-4">{user.status}</td>
+                    {isAdmin && (
+                      <td className="w-[20%] text-center py-4">
+                        <div className="md:flex items-center justify-center">
+                          <button
+                            onClick={() => handleEdit(user)}
+                            className="py-1 px-3 bg-yellow-400 text-white rounded-md"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => {
+                              onOpen("deleteUser", { id: user.id });
+                            }}
+                            className="py-1 px-3 mt-2 md:mt-0 bg-red-400 text-white rounded-md ml-3"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
+      <PaginationControls
+        currentPage={currentPage}
+        totalItems={totalUsers}
+        itemsPerPage={itemsPerPage}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 };

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import UserModal from "../modals/UserModal";
+import ConfirmationModal from "../modals/ConfirmationModal";
+import FiltersModal from "../modals/FiltersModal";
 
 const ModalProvider = () => {
   const [isMounted, setIsMounted] = useState(false);
@@ -17,6 +19,8 @@ const ModalProvider = () => {
   return (
     <>
       <UserModal />
+      <ConfirmationModal />
+      <FiltersModal />
     </>
   );
 };

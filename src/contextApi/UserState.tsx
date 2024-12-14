@@ -1,7 +1,16 @@
 "use client";
 
 import { User } from "@/app/users/page";
-import { useState, createContext, ReactNode } from "react";
+import {
+  useState,
+  createContext,
+  ReactNode,
+  useEffect,
+  useCallback,
+} from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 export interface UserContextType {
   usersArray: User[];
@@ -16,6 +25,25 @@ export interface UserContextType {
   setStatus: (newString: string) => void;
   id: number;
   setId: (newId: number) => void;
+  user: User | undefined;
+  setUser: (newUser: User) => void;
+  logOut: () => void;
+  totalUsers: number;
+  setTotalUsers: (value: number | ((prev: number) => number)) => void;
+  getUsers: (
+    page: number,
+    usersRole: string,
+    usersStatus: string,
+    query: string
+  ) => void;
+  currentPage: number;
+  setCurrentPage: (value: number) => void;
+  usersRole: string;
+  setUsersRole: (value: string) => void;
+  usersStatus: string;
+  setUsersStatus: (value: string) => void;
+  searchText: string;
+  setSearchText: (value: string) => void;
 }
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -23,57 +51,58 @@ const UserContext = createContext<UserContextType | null>(null);
 const STATUS = "Active";
 
 const UserState = ({ children }: { children: ReactNode }) => {
-  const users = [
-    {
-      id: 1,
-      name: "John Doe",
-      email: "johndoe@gmail.com",
-      role: "Software Engineer",
-      status: STATUS,
-    },
-    {
-      id: 2,
-      name: "Rohan",
-      email: "rohan2@gmail.com",
-      role: "Frontend Developer",
-      status: STATUS,
-    },
-    {
-      id: 3,
-      name: "John Doe",
-      email: "johndoe@gmail.com",
-      role: "Software Engineer",
-      status: STATUS,
-    },
-    {
-      id: 4,
-      name: "Rohan",
-      email: "rohan2@gmail.com",
-      role: "Frontend Developer",
-      status: STATUS,
-    },
-    {
-      id: 5,
-      name: "John",
-      email: "johndoe@gmail.com",
-      role: "Software Engineer",
-      status: STATUS,
-    },
-    {
-      id: 6,
-      name: "Rohit",
-      email: "rohan2@gmail.com",
-      role: "Frontend Developer",
-      status: STATUS,
-    },
-  ];
-
-  const [usersArray, setUsersArray] = useState(users);
+  const { push } = useRouter();
+  const [usersArray, setUsersArray] = useState([] as User[]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("");
   const [status, setStatus] = useState(STATUS);
   const [id, setId] = useState(0);
+  const [user, setUser] = useState<User | undefined>(undefined);
+  const [totalUsers, setTotalUsers] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersRole, setUsersRole] = useState("");
+  const [usersStatus, setUsersStatus] = useState("");
+  const [searchText, setSearchText] = useState("");
+
+  const logOut = () => {
+    localStorage.removeItem("token");
+    setUser(undefined);
+    push("/");
+  };
+
+  const getUsers = useCallback(
+    async (
+      page: number,
+      usersRole: string,
+      usersStatus: string,
+      query: string
+    ) => {
+      try {
+        // if (process.env.NODE_ENV === "development") {
+        //   const { worker } = await import("@/mocks/browser.mjs");
+        //   await worker.start();
+        // }
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_HOST}/api/users?page=${page}&usersRole=${usersRole}&usersStatus=${usersStatus}&query=${query}`,
+          {
+            headers: {
+              "auth-token": localStorage.getItem("token"),
+            },
+          }
+        );
+        setUsersArray(response.data.data);
+        setTotalUsers(response.data.meta.totalUsers);
+      } catch (error) {
+        let message;
+        if (axios.isAxiosError(error) && error.response) {
+          message = error.response.data.message;
+        } else message = String(error);
+        toast.error(message);
+      }
+    },
+    []
+  );
 
   return (
     <UserContext.Provider
@@ -90,6 +119,20 @@ const UserState = ({ children }: { children: ReactNode }) => {
         setStatus,
         id,
         setId,
+        user,
+        setUser,
+        logOut,
+        totalUsers,
+        setTotalUsers,
+        getUsers,
+        currentPage,
+        setCurrentPage,
+        usersRole,
+        setUsersRole,
+        usersStatus,
+        setUsersStatus,
+        searchText,
+        setSearchText,
       }}
     >
       {children}
